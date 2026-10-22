@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Randomizer — загрузка</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* ============ НАСТРОЙКИ (меняй здесь) ============ */
+:root{
+  --accent:#ff3b30;      /* основной цвет (красный неон) */
+  --accent2:#ffb020;     /* второй цвет (оранжевый) */
+  --bg1:#0b0608;
+  --bg2:#1d0b10;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg1);color:#f3e9e4;font-family:"Segoe UI",Arial,sans-serif}
+#bg{position:fixed;inset:0;background:radial-gradient(ellipse at 30% 20%,#3a0d16 0%,transparent 60%),radial-gradient(ellipse at 80% 90%,#3a2308 0%,transparent 55%),linear-gradient(160deg,var(--bg2),var(--bg1));}
+#bgimg{position:fixed;inset:0;background-size:cover;background-position:center;opacity:.35;filter:saturate(1.2)}
+#vig{position:fixed;inset:0;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.75) 100%)}
+canvas#dice{position:fixed;inset:0;width:100%;height:100%}
+.wrap{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:4vh 5vw}
+.top{display:flex;justify-content:space-between;align-items:flex-start}
+.logo{font-size:min(7vw,84px);font-weight:900;letter-spacing:.08em;line-height:1;
+  text-shadow:0 0 18px rgba(255,59,48,.6),0 0 48px rgba(255,59,48,.35);position:relative}
+.logo span{color:var(--accent)}
+.logo::before,.logo::after{content:attr(data-t);position:absolute;left:0;top:0;opacity:.7;mix-blend-mode:screen}
+.logo::before{color:#00e5ff;transform:translate(2px,0);animation:gl1 3.2s infinite steps(1)}
+.logo::after{color:#ff2bd6;transform:translate(-2px,0);animation:gl2 2.7s infinite steps(1)}
+@keyframes gl1{0%,92%,100%{clip-path:inset(0 0 100% 0)}93%{clip-path:inset(20% 0 55% 0)}95%{clip-path:inset(60% 0 10% 0)}97%{clip-path:inset(0 0 100% 0)}}
+@keyframes gl2{0%,88%,100%{clip-path:inset(0 0 100% 0)}89%{clip-path:inset(40% 0 30% 0)}91%{clip-path:inset(5% 0 80% 0)}93%{clip-path:inset(0 0 100% 0)}}
+.sub{margin-top:1.2vh;font-size:min(2.2vw,22px);color:var(--accent2);letter-spacing:.35em;text-transform:uppercase}
+.info{text-align:right;font-size:min(1.8vw,17px);line-height:1.7;color:#cbb8b0}
+.info b{color:#fff}
+.mid{display:flex;gap:3vw;align-items:stretch}
+.card{background:rgba(20,10,14,.72);border:1px solid rgba(255,59,48,.45);box-shadow:0 0 24px rgba(255,59,48,.15) inset,0 0 20px rgba(0,0,0,.5);padding:2.2vh 1.6vw;backdrop-filter:blur(4px)}
+.tips{flex:1.4}
+.card h3{font-size:min(1.7vw,16px);letter-spacing:.3em;color:var(--accent);margin-bottom:1.2vh;text-transform:uppercase}
+#slot{font-size:min(2.6vw,28px);font-weight:700;min-height:4.4em;line-height:1.35;transition:opacity .25s}
+#slot small{display:block;margin-top:.5em;font-size:.6em;font-weight:400;color:#bfa9a0}
+.rules{flex:1}
+.rules ul{list-style:none;font-size:min(1.9vw,18px);line-height:1.8}
+.rules li::before{content:"🎲 ";}
+.bottom{display:flex;align-items:flex-end;gap:3vw}
+.load{flex:1}
+.status{display:flex;justify-content:space-between;font-size:min(1.8vw,17px);color:#d9c7be;margin-bottom:1vh;gap:2vw}
+#file{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60vw;opacity:.8}
+.bar{height:min(2.4vh,20px);background:rgba(255,255,255,.08);border:1px solid rgba(255,59,48,.6);position:relative;overflow:hidden}
+#fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));box-shadow:0 0 18px var(--accent);transition:width .35s}
+.bar::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(110deg,transparent 0 14px,rgba(255,255,255,.12) 14px 22px);animation:mv 1s linear infinite}
+@keyframes mv{to{background-position:44px 0}}
+.music{display:flex;align-items:center;gap:1vw;font-size:min(1.8vw,17px);color:#d9c7be}
+.music button{background:transparent;border:1px solid var(--accent);color:#fff;font-size:min(2.4vw,22px);width:2.2em;height:2.2em;cursor:pointer}
+.music button:hover{background:rgba(255,59,48,.35)}
+.music input{accent-color:var(--accent);width:min(14vw,160px)}
+.credit{position:fixed;right:1.2vw;bottom:.8vh;z-index:3;font-size:12px;color:#8d7a72}
+</style>
+</head>
+<body>
+<div id="bg"></div><div id="bgimg"></div><canvas id="dice"></canvas><div id="vig"></div>
+
+<div class="wrap">
+  <div class="top">
+    <div>
+      <div class="logo" data-t="RANDOMIZER">RANDOM<span>IZER</span></div>
+      <div class="sub">Zombie Survival · Всё решает удача</div>
+    </div>
+    <div class="info">
+      Сервер: <b id="sname">Randomizer</b><br>
+      Карта: <b id="smap">—</b><br>
+      Слотов: <b id="smax">—</b>
+    </div>
+  </div>
+
+  <div class="mid">
+    <div class="card tips">
+      <h3>Случайный совет</h3>
+      <div id="slot"></div>
+    </div>
+    <div class="card rules">
+      <h3>Правила</h3>
+      <ul id="rules"></ul>
+    </div>
+  </div>
+
+  <div class="bottom">
+    <div class="load">
+      <div class="status"><span id="stat">Подключение к серверу…</span><span id="file"></span><span id="pct">0%</span></div>
+      <div class="bar"><div id="fill"></div></div>
+    </div>
+    <div class="music" id="music">
+      <button id="mute" title="Включить/выключить музыку">🔊</button>
+      <input id="vol" type="range" min="0" max="100" value="35">
+    </div>
+  </div>
+</div>
+<div class="credit">Loading screen · Randomizer</div>
+
+<audio id="aud" loop></audio>
+
+<script>
+/* ============ НАСТРОЙКИ (меняй здесь) ============ */
+var MUSIC_URL = "";   // прямая ссылка на mp3/ogg, например "https://твойсайт/music.mp3". Пусто = без музыки
+var BG_URL    = "";   // ссылка на картинку фона (jpg/png), пусто = только анимированный фон
+var RULES = [
+  "Не мешайте своим — играйте командой",
+  "Без читов, багов и макросов",
+  "Уважайте других игроков",
+  "Не спамьте в чате и микрофоне",
+  "Решения администрации не обсуждаются"
+];
+var TIPS = [
+  ["Раз в минуту каждому выдаётся СЛУЧАЙНОЕ оружие", "Старое убирается, патроны тоже случайные — приспосабливайся!"],
+  ["Новый зомби-класс при каждом убийстве", "Никогда не знаешь, кем возродишься. Играй тем, что выпало."],
+  ["Боссы появляются совершенно случайно", "Нет гарантий, кто станет следующим боссом."],
+  ["Напиши !r в чат, чтобы проголосовать за старт", "Раунд начнётся, когда готовы достаточно игроков."],
+  ["Открой F1 — там Статистика, PointShop и Навыки", "Сравни свои убийства, урон и часы на сервере."],
+  ["Следи за таймером выдачи лута сверху экрана", "Успей использовать оружие до следующей выдачи."],
+  ["Улучшения оружия тоже случайные", "Бывает и редкий уровень 3 — повезло так повезло."],
+  ["Не теряйте друг друга", "Последний выживший играет под особую музыку. Продержись!"]
+];
+
+/* ============ ДВИЖОК ============ */
+function $(i){return document.getElementById(i)}
+var q = (function(){var o={},s=location.search.substring(1).split("&");s.forEach(function(p){var a=p.split("=");if(a[0])o[a[0]]=decodeURIComponent(a[1]||"")});return o})();
+if(q.mapname) $("smap").textContent = q.mapname;
+
+// список правил
+RULES.forEach(function(r){var li=document.createElement("li");li.textContent=r;$("rules").appendChild(li)});
+
+// фон-картинка
+if(BG_URL) $("bgimg").style.backgroundImage = "url('"+BG_URL+"')";
+
+// случайные советы (как слот-машина)
+var tipIdx = -1;
+function showTip(){
+  var n; do{n=Math.floor(Math.random()*TIPS.length)}while(n===tipIdx && TIPS.length>1);
+  tipIdx=n;
+  var el=$("slot"); el.style.opacity=0;
+  setTimeout(function(){
+    el.innerHTML=""; var t=document.createTextNode(TIPS[n][0]); el.appendChild(t);
+    var s=document.createElement("small"); s.textContent=TIPS[n][1]; el.appendChild(s);
+    el.style.opacity=1;
+  },250);
+}
+showTip(); setInterval(showTip, 6000);
+
+// ---- вызовы от Garry's Mod ----
+var total=0, needed=0;
+function setProg(){
+  var p = total>0 ? Math.max(0,Math.min(100,Math.round((total-needed)/total*100))) : 0;
+  $("fill").style.width=p+"%"; $("pct").textContent=p+"%";
+}
+function GameDetails(servername, serverurl, mapname, maxplayers, steamid, gamemode){
+  if(servername) $("sname").textContent=servername;
+  if(mapname) $("smap").textContent=mapname;
+  if(maxplayers) $("smax").textContent=maxplayers;
+}
+function SetFilesTotal(t){ total=t; setProg(); }
+function SetFilesNeeded(n){ needed=n; setProg(); }
+function DownloadingFile(f){ var s=(f||"").split("/").pop(); $("file").textContent=s; $("stat").textContent="Загрузка файлов…"; }
+function SetStatusChanged(s){ $("stat").textContent=s; if(/Sending client info|Starting Lua|Workshop Complete/i.test(s)){$("fill").style.width="100%";$("pct").textContent="100%";} }
+
+// ---- музыка ----
+var aud=$("aud"), muted=false;
+if(!MUSIC_URL){ $("music").style.display="none"; }
+else{
+  aud.src=MUSIC_URL;
+  var v=35; try{var sv=localStorage.getItem("rz_vol"); if(sv!==null) v=+sv;}catch(e){}
+  $("vol").value=v; aud.volume=v/100;
+  var go=function(){aud.play().catch(function(){})}; go();
+  $("vol").oninput=function(){aud.volume=this.value/100; try{localStorage.setItem("rz_vol",this.value)}catch(e){}};
+  $("mute").onclick=function(){muted=!muted; aud.muted=muted; this.textContent=muted?"🔇":"🔊"; if(!muted)go();};
+}
+
+// ---- анимация: падающие кубики/числа ----
+var cv=$("dice"), cx=cv.getContext("2d"), W,H, items=[];
+function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+rs(); addEventListener("resize",rs);
+var FACES=["⚀","⚁","⚂","⚃","⚄","⚅","?","7","★"];
+for(var i=0;i<34;i++) items.push({x:Math.random()*2000,y:Math.random()*1200,s:18+Math.random()*44,v:.25+Math.random()*.9,r:Math.random()*6,rv:(Math.random()-.5)*.02,f:FACES[Math.floor(Math.random()*FACES.length)],a:.06+Math.random()*.14});
+(function loop(){
+  cx.clearRect(0,0,W,H);
+  items.forEach(function(d){
+    d.y+=d.v; d.r+=d.rv;
+    if(d.y>H+60){d.y=-60;d.x=Math.random()*W;d.f=FACES[Math.floor(Math.random()*FACES.length)]}
+    cx.save(); cx.translate(d.x%W,d.y); cx.rotate(d.r);
+    cx.globalAlpha=d.a; cx.fillStyle=(d.s>40)?"#ffb020":"#ff3b30";
+    cx.font=d.s+"px Arial"; cx.textAlign="center"; cx.fillText(d.f,0,0); cx.restore();
+  });
+  requestAnimationFrame(loop);
+})();
+
+// предпросмотр в браузере (вне игры) — имитация загрузки
+if(!/Gmod|Garrys/i.test(navigator.userAgent) && !q.steamid){
+  var t=500,n=500; GameDetails("Randomizer ZS","","zs_last_day_z","32");
+  SetFilesTotal(t); SetFilesNeeded(n);
+  var iv=setInterval(function(){ n-=7+Math.floor(Math.random()*12); if(n<=0){n=0;clearInterval(iv)} SetFilesNeeded(n); DownloadingFile("materials/models/zombie"+n+".vtf") },200);
+}
+</script>
+</body>
+</html>
